@@ -90,14 +90,16 @@ class CreateNoteActivity : AppCompatActivity() {
         if (!viewModel.existsNote(title)) {
             if (isFilled(title, description)) {
                 //if all fields are filled create new note
-                val time = calendarNow.get(Calendar.HOUR_OF_DAY).toString() + ":" + calendarNow.get(Calendar.MINUTE).toString() + dateFormat
+                val time = calendarNow.get(Calendar.HOUR_OF_DAY).toString() + ":" + calendarNow.get(
+                    Calendar.MINUTE
+                ).toString() + dateFormat
                 val note = Note(title, description, day, importance, time, false)
                 viewModel.insertNote(note)
 
                 //if the specified time is longer than the current
                 val calendar = Calendar.getInstance()
                 if (calendarNow >= calendar) {
-                    setAlarm(calendarNow.timeInMillis)
+                    setAlarm(calendarNow.timeInMillis, title, description)
                 }
                 //start intent
                 val intent = Intent(this, MainActivity::class.java)
@@ -113,9 +115,15 @@ class CreateNoteActivity : AppCompatActivity() {
     private fun isFilled(title: String, description: String) = title.isNotEmpty() && description.isNotEmpty()
 
     //deliver a notification at the specified time with broadcast receiver
-    private fun setAlarm(timeInMillis: Long){
+    private fun setAlarm(timeInMillis: Long, title: String, description: String){
         val intent = Intent(baseContext, NotificationReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(baseContext, 0, intent, 0)
+        intent.putExtra("Title", title)
+        intent.putExtra("Description", description)
+
+        //Unique ids for pendingIntent
+        val RQS_1 : Int = System.currentTimeMillis().toInt()
+
+        val pendingIntent = PendingIntent.getBroadcast(baseContext, RQS_1, intent, PendingIntent.FLAG_ONE_SHOT)
         val alarmManager: AlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
     }
