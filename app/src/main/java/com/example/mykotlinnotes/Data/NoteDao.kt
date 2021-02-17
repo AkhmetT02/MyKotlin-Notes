@@ -9,7 +9,7 @@ import androidx.room.Query
 @Dao
 interface NoteDao {
     @Query("SELECT * FROM note")
-    fun getAllNotes(): LiveData<List<Note>>
+    fun getAllNotes(): List<Note>
 
     @Insert
     fun insertNote(note: Note)

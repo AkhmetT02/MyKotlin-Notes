@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,22 +16,29 @@ import com.example.mykotlinnotes.R
 import kotlinx.android.synthetic.main.activity_completed_tasks.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.main_layout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CompletedTasksActivity : AppCompatActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
+    private lateinit var viewModel: MainViewModel
     private lateinit var adapter: NoteAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_completed_tasks)
 
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+
         adapter = NoteAdapter(this)
 
-        viewModel.notes.observe(this, Observer {
-            val notesList = it.filter { it.isSuccess }
+
+        CoroutineScope(Dispatchers.Default).launch {
+            val notesList = viewModel.getNotes().filter { it.isSuccess }
             adapter.notes = notesList
-        } )
+        }
+
 
         recycler_completed_notes.layoutManager = LinearLayoutManager(this)
         recycler_completed_notes.adapter = adapter

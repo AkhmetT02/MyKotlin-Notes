@@ -17,6 +17,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +31,9 @@ import kotlinx.android.synthetic.main.activity_main.main_layout
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.main_navigation_drawer.*
 import kotlinx.android.synthetic.main.main_navigation_drawer.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
@@ -52,16 +56,20 @@ class MainActivity : AppCompatActivity() {
         adapter = NoteAdapter(this)
         recycler_notes.adapter = adapter
 
-        val notes = viewModel.notes
-        notes.observe(this, Observer {
-            notesAsList = it as ArrayList<Note>
+        CoroutineScope(Dispatchers.Default).launch {
+            val notes = viewModel.getNotes()
+
+            notesAsList = notes as ArrayList<Note>
+
+            notesAsList = notesAsList
             adapter.notes = notesAsList.filter { !it.isSuccess }
-            if (it.isEmpty()){
+            if (notesAsList.isEmpty()) {
                 not_tasks_tv.visibility = View.VISIBLE
-            } else{
+            } else {
                 not_tasks_tv.visibility = View.INVISIBLE
             }
-        })
+        }
+
 
         //remove note when swiped
         val itemTouchHelperCallBack = object: ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT){

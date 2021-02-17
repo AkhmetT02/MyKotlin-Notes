@@ -10,15 +10,19 @@ import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.example.mykotlinnotes.Data.MainViewModel
 import com.example.mykotlinnotes.Data.Note
 import com.example.mykotlinnotes.Notification.NotificationReceiver
 import com.example.mykotlinnotes.R
 import kotlinx.android.synthetic.main.activity_create_note.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 
 class CreateNoteActivity : AppCompatActivity() {
-    private val viewModel: MainViewModel by viewModels()
+    private lateinit var viewModel: MainViewModel
     private var calendarNow: Calendar = Calendar.getInstance()
 
     private var hour: Int = 0
@@ -28,6 +32,8 @@ class CreateNoteActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_note)
+
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
         setTime()
         importance_group.check(0)
@@ -87,28 +93,31 @@ class CreateNoteActivity : AppCompatActivity() {
         }
 
         //if this note not in database
-        if (!viewModel.existsNote(title)) {
-            if (isFilled(title, description)) {
-                //if all fields are filled create new note
-                val time = calendarNow.get(Calendar.HOUR_OF_DAY).toString() + ":" + calendarNow.get(
-                    Calendar.MINUTE
-                ).toString() + dateFormat
-                val note = Note(title, description, day, importance, time, false)
-                viewModel.insertNote(note)
+        CoroutineScope(Dispatchers.Default).launch {
+            if (!viewModel.existsNote(title)) {
+                if (isFilled(title, description)) {
+                    //if all fields are filled create new note
+                    val time = calendarNow.get(Calendar.HOUR_OF_DAY).toString() + ":" + calendarNow.get(
+                            Calendar.MINUTE
+                    ).toString() + dateFormat
+                    val note = Note(title, description, day, importance, time, false)
+                    viewModel.insertNote(note)
 
-                //if the specified time is longer than the current
-                val calendar = Calendar.getInstance()
-                if (calendarNow >= calendar) {
-                    setAlarm(calendarNow.timeInMillis, title, description)
+                    //if the specified time is longer than the current
+                    val calendar = Calendar.getInstance()
+                    if (calendarNow >= calendar) {
+                        setAlarm(calendarNow.timeInMillis, title, description)
+                    }
+                    //start intent
+                    val intent = Intent(this@CreateNoteActivity, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    Toast.makeText(this@CreateNoteActivity, "Please, fill all lines...", Toast.LENGTH_SHORT).show()
                 }
-                //start intent
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
             } else {
-                Toast.makeText(this, "Please, fill all lines...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CreateNoteActivity, "A note with the same name already exists.", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            Toast.makeText(this, "A note with the same name already exists.", Toast.LENGTH_SHORT).show()
         }
     }
 

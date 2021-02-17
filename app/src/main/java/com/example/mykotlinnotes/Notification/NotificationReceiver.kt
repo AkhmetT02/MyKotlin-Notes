@@ -24,7 +24,7 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val title = intent?.getStringExtra("Title")
         val description = intent?.getStringExtra("Description")
-        val builder: NotificationCompat.Builder? = context?.let {
+        val builder: NotificationCompat.Builder? = context.let {
             NotificationCompat.Builder(it, "taskNotify")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
